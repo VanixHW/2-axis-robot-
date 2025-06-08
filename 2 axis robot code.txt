@@ -1,0 +1,120 @@
+#include <SPI.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include <Servo.h>
+
+// OLED setup
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+
+#define OLED_SCK 8
+#define OLED_MOSI 9
+#define OLED_DC 11
+#define OLED_RST 10
+#define OLED_CS 12
+
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, OLED_MOSI, OLED_SCK, OLED_DC, OLED_RST, OLED_CS);
+
+// Servo pins
+#define SERVO_Y_PIN 2
+#define SERVO_X_PIN 3
+
+Servo servoY;  // Up/Down
+Servo servoX;  // Left/Right
+
+// Eye positions
+int eyeX1 = 26, eyeX2 = 70, eyeY = 20;
+int eyeSize = 36;
+
+// Idle timers
+unsigned long lastIdleAction = 0;
+unsigned long idleDelay = 2000; // Initial delay
+
+// --- Eye Drawing Functions ---
+void drawEyes(int leftSize, int rightSize, int xOffset) {
+  display.clearDisplay();
+  display.fillRoundRect(eyeX1 - xOffset, eyeY + (eyeSize - leftSize) / 2, leftSize, leftSize, 4, SSD1306_WHITE);
+  display.fillRoundRect(eyeX2 - xOffset, eyeY + (eyeSize - rightSize) / 2, rightSize, rightSize, 4, SSD1306_WHITE);
+  display.display();
+}
+
+void drawEyeLid(int lidHeight) {
+  display.clearDisplay();
+  display.fillRoundRect(eyeX1, eyeY, eyeSize, eyeSize, 4, SSD1306_WHITE);
+  display.fillRoundRect(eyeX2, eyeY, eyeSize, eyeSize, 4, SSD1306_WHITE);
+  display.fillRect(eyeX1, eyeY, eyeSize, lidHeight, SSD1306_BLACK);
+  display.fillRect(eyeX2, eyeY, eyeSize, lidHeight, SSD1306_BLACK);
+  display.display();
+}
+
+// Blink animation
+void blinkAnimation() {
+  for (int h = 0; h <= eyeSize; h += 6) {
+    drawEyeLid(h);
+    delay(25);
+  }
+  delay(100);
+  for (int h = eyeSize; h >= 0; h -= 6) {
+    drawEyeLid(h);
+    delay(25);
+  }
+}
+
+// --- Idle Mode: Curious Head Movement + Blinking ---
+void idleBehavior() {
+  unsigned long currentTime = millis();
+  if (currentTime - lastIdleAction > idleDelay) {
+    // Head movement ranges (adjusted!)
+    int yPos = random(60, 100);  // Y axis (up/down) - not looking too far up
+    int xPos = random(60, 120);  // X axis (left/right)
+
+    servoY.write(yPos);
+    servoX.write(xPos);
+
+    // Randomly blink sometimes
+    if (random(0, 3) == 0) {
+      blinkAnimation();
+    } else {
+      drawEyes(eyeSize, eyeSize, 0);
+    }
+
+    lastIdleAction = currentTime;
+    idleDelay = random(1500, 4000);  // Time between idle actions
+  }
+}
+
+// --- Setup ---
+void setup() {
+  Serial.begin(9600);
+
+  if (!display.begin(SSD1306_SWITCHCAPVCC)) {
+    Serial.println(F("SSD1306 allocation failed"));
+    for (;;);
+  }
+  display.clearDisplay();
+  drawEyes(eyeSize, eyeSize, 0);
+
+  servoY.attach(SERVO_Y_PIN);
+  servoX.attach(SERVO_X_PIN);
+  servoY.write(80); // Calibrated center for Y (slightly down)
+  servoX.write(90); // Center for X
+
+  Serial.println("Dev is ready! Idle mode active...");
+}
+
+// --- Loop ---
+void loop() {
+  idleBehavior();
+
+  // (Optional) Bluetooth commands for more tricks can be added here!
+  if (Serial.available()) {
+    String command = Serial.readStringUntil('\n');
+    command.trim();
+    command.toLowerCase();
+
+    if (command == "blink") {
+      blinkAnimation();
+    }
+    // Add more commands later if needed!
+  }
+}
