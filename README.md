@@ -39,8 +39,8 @@ Installation & Usage
 Clone the Repository:
 
 bash
-git clone https://github.com/yourusername/2-Axis-Robot-Arduino.git
-cd 2-Axis-Robot-Arduino
+git clone [https://github.com/yourusername/2-Axis-Robot-Arduino.git
+cd 2-Axis-Robot-Arduino](https://github.com/VanixHW/2-axis-robot-)
 Flash the Firmware: Upload the servo and OLED control code using Arduino IDE.
 
 Power & Test: Watch the robot blink, move randomly, and react to commands.
