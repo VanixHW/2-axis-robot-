@@ -1,0 +1,9 @@
+
+Component	Arduino Uno Pin
+OLED SCK	8
+OLED MOSI	9
+OLED DC	 11
+OLED RST 10
+OLED CS	 12
+Servo Y (Up/Down)	2
+Servo X (Left/Right)	3
